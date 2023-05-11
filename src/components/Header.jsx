@@ -4,16 +4,12 @@ export default function Header() {
     const location = useLocation();
     const navigate = useNavigate();
     
-    
-    // function pathMatchRoute(route){
-    //   if(location.pathname === route){
-    //         return true;
-    //     }
-    // }
-
     function pathMatchRoute(route){
-      return location.pathname.startsWith(route);
+      if(location.pathname === route){
+            return true;
+        }
     }
+
     
   return (
     <div className="bg-white border-b shadow-sm sticky top-0 z-50">
