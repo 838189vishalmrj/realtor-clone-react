@@ -1,24 +1,50 @@
-
 import { useState } from "react";
-import {AiFillEyeInvisible,AiFillEye} from 'react-icons/ai'
+import { AiFillEyeInvisible, AiFillEye } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import OAuth from "../components/OAuth";
+import {getAuth,createUserWithEmailAndPassword,updateProfile} from 'firebase/auth'
+import { db } from "../firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import {toast} from 'react-toastify'
 
 export default function SignUp() {
-  const [showPassword,setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormDate] = useState({
     email: "",
     password: "",
-    name:""
+    name: "",
   });
 
-  const { email, password,name } = formData;
+
+  const { email, password, name } = formData;
+  const navigate  = useNavigate();
 
   function onChange(e) {
     setFormDate((prevState) => ({
       ...prevState,
       [e.target.id]: e.target.value,
     }));
+  }
+
+  async function onSubmit(e){
+    e.preventDefault();
+    try {
+        const auth = getAuth();
+        const userCredential =await createUserWithEmailAndPassword(auth,email,password);
+        updateProfile(auth.currentUser,{
+          displayName:name
+        })
+        const user = userCredential.user;
+        toast.success("Sign up was successfully");
+        const formDataCopy = {...formData};
+        delete formDataCopy.password;
+        formDataCopy.timestamp = serverTimestamp();
+        await setDoc(doc(db,"users",user.uid),formDataCopy);
+        navigate('/');
+    } catch (error) {
+      toast.error("Somthing went wrong with registration");
+    }
   }
 
   return (
@@ -33,7 +59,7 @@ export default function SignUp() {
           />
         </div>
         <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-          <form>
+          <form onSubmit={onSubmit}>
             <input
               className="mb-6 w-full px-4 py-2 text-xl text-gray-700 bg-white border-gray-400 rounded transition ease-in-out"
               type="text"
@@ -53,46 +79,66 @@ export default function SignUp() {
             <div className="relative mb-6">
               <input
                 className="w-full px-4 py-2 text-xl text-gray-700 bg-white border-gray-400 rounded transition ease-in-out"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 value={password}
                 onChange={onChange}
                 placeholder="Password"
               />
-              {showPassword ? (<AiFillEyeInvisible  className="absolute right-3 top-3 text-2xl cursor-pointer" onClick={()=>setShowPassword((prevState)=>!prevState)}  />) : (<AiFillEye className="absolute right-3 top-3 text-2xl cursor-pointer"
-              onClick={()=>setShowPassword((prevState)=>!prevState)}
-              />)}
+              {showPassword ? (
+                <AiFillEyeInvisible
+                  className="absolute right-3 top-3 text-2xl cursor-pointer"
+                  onClick={() => setShowPassword((prevState) => !prevState)}
+                />
+              ) : (
+                <AiFillEye
+                  className="absolute right-3 top-3 text-2xl cursor-pointer"
+                  onClick={() => setShowPassword((prevState) => !prevState)}
+                />
+              )}
             </div>
             <div className="flex items-center justify-between whitespace-nowrap text-sm sm:text-lg mb-6">
-              <p>Have a account?
-                <Link to={"/sign-in"}
-                className="ml-2 text-red-600 hover:text-red-700
+              <p>
+                Have a account?
+                <Link
+                  to={"/sign-in"}
+                  className="ml-2 text-red-600 hover:text-red-700
                 hover:font-semibold
                 transition duration-200 ease-in-out"
-                >Sign in</Link>
+                >
+                  Sign in
+                </Link>
               </p>
               <p>
-                <Link to={"/forgot-password"}
-                className=" text-blue-600 hover:text-blue-700
+                <Link
+                  to={"/forgot-password"}
+                  className=" text-blue-600 hover:text-blue-700
                 hover:font-semibold
                 transition duration-200 ease-in-out"
-                >Forgot password?</Link>
+                >
+                  Forgot password?
+                </Link>
               </p>
             </div>
-            <button className="w-full bg-blue-600 text-white py-3 text-sm font-medium uppercase rounded shadow-md 
+            <button
+              className="w-full bg-blue-600 text-white py-3 text-sm font-medium uppercase rounded shadow-md 
             hover:bg-blue-700 transition 
             duration-150 ease-in-out 
-            hover:shadow-lg active:bg-blue-800">Sign Up</button>
-            <div className="my-4 flex items-center
+            hover:shadow-lg active:bg-blue-800"
+            >
+              Sign Up
+            </button>
+            <div
+              className="my-4 flex items-center
             before:border before:flex-1 before:border-gray-300
-            after:border after:flex-1 after:border-gray-300 ">
+            after:border after:flex-1 after:border-gray-300 "
+            >
               <p className="text-center font-semibold mx-4">OR</p>
             </div>
-            <OAuth/>
+            <OAuth />
           </form>
         </div>
       </div>
     </section>
   );
 }
-
